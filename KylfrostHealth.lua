@@ -50,7 +50,28 @@ local CONFIG = {
 --   - UnitHealthPercent() returns the health percentage directly as a secret
 --     number, so we don't need to calculate it ourselves.
 --   - Secret strings can be concatenated with ".." and passed to SetText().
+--
+-- To scale secret numbers (e.g., from 0-1 to 0-100), we use a CurveObject.
+-- A CurveObject defines a mapping between input and output values using points.
+-- We create a simple linear curve with two points:
+--   (0, 0) and (1, 100)
+-- This tells WoW: "when the input is 0, output 0; when the input is 1, output 100."
+-- UnitHealthPercent() accepts this curve as a parameter and applies it internally,
+-- so the result is already scaled — no addon-side arithmetic needed.
 -- ============================================================================
+
+-- ============================================================================
+-- CREATE A CURVE TO SCALE PERCENTAGE FROM 0-1 TO 0-100
+-- ============================================================================
+-- UnitHealthPercent() returns a secret number in the 0 to 1 range.
+-- We want to display it as 0 to 100 (e.g., "100" instead of "1").
+-- Since we can't multiply a secret number, we create a CurveObject that
+-- WoW will use internally to scale the value for us.
+-- ============================================================================
+
+local percentCurve = C_CurveUtil.CreateCurve()
+percentCurve:AddPoint(0, 0)    -- Input 0   (0% health)   → Output 0
+percentCurve:AddPoint(1, 100)  -- Input 1   (100% health) → Output 100
 
 -- ============================================================================
 -- HELPER FUNCTION: Build the health display string
@@ -74,10 +95,11 @@ local function GetHealthText(unitId)
 
     -- Use UnitHealthPercent() to get the percentage directly from the API.
     -- This avoids doing arithmetic on secret numbers (which would cause errors).
-    -- UnitHealthPercent() is a patch 12+ API that returns a secret number.
-    -- We pass it through AbbreviateLargeNumbers() to get a displayable string.
+    -- We pass our percentCurve so that the 0-1 value is scaled to 0-100.
+    -- The second argument (true) enables heal prediction for smoother updates.
+    -- We then pass it through AbbreviateLargeNumbers() to get a displayable string.
     if UnitHealthPercent then
-        local percentStr = AbbreviateLargeNumbers(UnitHealthPercent(unitId))
+        local percentStr = AbbreviateLargeNumbers(UnitHealthPercent(unitId, true, percentCurve))
         -- Build the final string using concatenation (safe with secret strings)
         return healthStr .. "/" .. maxHealthStr .. " (" .. percentStr .. "%)"
     end
