@@ -36,33 +36,28 @@ local CONFIG = {
 }
 
 -- ============================================================================
--- HELPER FUNCTION: Format large numbers into abbreviated form
+-- IMPORTANT NOTE ON "SECRET NUMBERS"
 -- ============================================================================
--- Converts numbers like 52800 into "52.8K" for easier reading.
--- Supports K (thousands), M (millions), and B (billions).
+-- In modern WoW (patch 12+), health values returned by UnitHealth() and
+-- UnitHealthMax() are "secret numbers." This is a Blizzard security measure
+-- to prevent addons from automating gameplay based on exact health values.
+--
+-- Secret numbers CANNOT be used in normal math (addition, division, etc.).
+-- However, they CAN be passed to specific Blizzard functions that are
+-- designed to handle them:
+--   - AbbreviateLargeNumbers() converts a secret number into a secret string
+--     like "52.8K" that can be displayed.
+--   - UnitHealthPercent() returns the health percentage directly as a secret
+--     number, so we don't need to calculate it ourselves.
+--   - Secret strings can be concatenated with ".." and passed to SetText().
 -- ============================================================================
-
-local function AbbreviateNumber(value)
-    -- If the number is a billion or more, show as "X.XB"
-    if value >= 1000000000 then
-        return string.format("%.1fB", value / 1000000000)
-    -- If the number is a million or more, show as "X.XM"
-    elseif value >= 1000000 then
-        return string.format("%.1fM", value / 1000000)
-    -- If the number is a thousand or more, show as "X.XK"
-    elseif value >= 1000 then
-        return string.format("%.1fK", value / 1000)
-    -- Otherwise, just show the raw number
-    else
-        return tostring(value)
-    end
-end
 
 -- ============================================================================
 -- HELPER FUNCTION: Build the health display string
 -- ============================================================================
--- Takes a unit ID (like "player" or "target") and returns a formatted string.
--- Example output: "52.8K/52.8K (100.0%)"
+-- Takes a unit ID (like "player" or "target") and returns a displayable
+-- string using only secret-number-safe Blizzard API functions.
+-- Example output: "52.8K/52.8K (100%)"
 -- Returns nil if the unit doesn't exist (e.g., no target selected).
 -- ============================================================================
 
@@ -72,24 +67,23 @@ local function GetHealthText(unitId)
         return nil
     end
 
-    -- Get the current and maximum health from the WoW API
-    local currentHealth = UnitHealth(unitId)
-    local maxHealth = UnitHealthMax(unitId)
+    -- Use Blizzard's AbbreviateLargeNumbers() to safely convert secret
+    -- health numbers into readable strings like "52.8K"
+    local healthStr = AbbreviateLargeNumbers(UnitHealth(unitId))
+    local maxHealthStr = AbbreviateLargeNumbers(UnitHealthMax(unitId))
 
-    -- Calculate the health percentage
-    -- Guard against division by zero (just in case max health is 0)
-    local healthPercent = 0
-    if maxHealth > 0 then
-        healthPercent = (currentHealth / maxHealth) * 100
+    -- Use UnitHealthPercent() to get the percentage directly from the API.
+    -- This avoids doing arithmetic on secret numbers (which would cause errors).
+    -- UnitHealthPercent() is a patch 12+ API that returns a secret number.
+    -- We pass it through AbbreviateLargeNumbers() to get a displayable string.
+    if UnitHealthPercent then
+        local percentStr = AbbreviateLargeNumbers(UnitHealthPercent(unitId))
+        -- Build the final string using concatenation (safe with secret strings)
+        return healthStr .. "/" .. maxHealthStr .. " (" .. percentStr .. "%)"
     end
 
-    -- Build and return the formatted string: "52.8K/52.8K (100.0%)"
-    return string.format(
-        "%s/%s (%.1f%%)",
-        AbbreviateNumber(currentHealth),
-        AbbreviateNumber(maxHealth),
-        healthPercent
-    )
+    -- Fallback if UnitHealthPercent is not available: show without percentage
+    return healthStr .. "/" .. maxHealthStr
 end
 
 -- ============================================================================
