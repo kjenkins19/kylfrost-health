@@ -32,7 +32,7 @@ local CONFIG = {
     playerOffsetX = 30,   -- Horizontal offset for player health text
     playerOffsetY = -25,    -- Vertical offset for player health text
     targetOffsetX = -30,  -- Horizontal offset for target health text
-    targetOffsetY = 25,    -- Vertical offset for target health text
+    targetOffsetY = -25,    -- Vertical offset for target health text
 }
 
 -- ============================================================================
