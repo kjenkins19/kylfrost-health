@@ -1,0 +1,7 @@
+## Interface: 120000
+## Title: Kylfrost Health
+## Notes: Displays current health / max health (percent) above the player and target unit frames.
+## Author: Kylfrost
+## Version: 1.0.0
+
+KylfrostHealth.lua
