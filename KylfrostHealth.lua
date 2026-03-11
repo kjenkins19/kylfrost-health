@@ -16,23 +16,23 @@
 local CONFIG = {
     -- Font settings
     fontFace = "Fonts\\FRIZQT__.TTF",  -- Default WoW font
-    fontSize = 16,                      -- Size of the text in points
+    fontSize = 12,                      -- Size of the text in points
     fontOutline = "OUTLINE",            -- "OUTLINE", "THICKOUTLINE", or "" for none
 
     -- Text color (Red, Green, Blue, Alpha) — values from 0 to 1
     -- Default is gold/yellow to match the WoW aesthetic
     fontColorR = 1.0,   -- Red
-    fontColorG = 0.82,  -- Green
-    fontColorB = 0.0,   -- Blue
+    fontColorG = 1.0,  -- Green
+    fontColorB = 1.0,   -- Blue
     fontColorA = 1.0,   -- Alpha (transparency: 1 = fully visible, 0 = invisible)
 
     -- Position offset relative to the anchor frame
     -- Positive Y moves the text UP, negative moves it DOWN
     -- Positive X moves RIGHT, negative moves LEFT
-    playerOffsetX = 25,   -- Horizontal offset for player health text
-    playerOffsetY = 3,    -- Vertical offset for player health text
-    targetOffsetX = -25,  -- Horizontal offset for target health text
-    targetOffsetY = 3,    -- Vertical offset for target health text
+    playerOffsetX = 30,   -- Horizontal offset for player health text
+    playerOffsetY = -25,    -- Vertical offset for player health text
+    targetOffsetX = -30,  -- Horizontal offset for target health text
+    targetOffsetY = 25,    -- Vertical offset for target health text
 }
 
 -- ============================================================================
